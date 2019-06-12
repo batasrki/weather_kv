@@ -16,18 +16,37 @@ defmodule WeatherKv.ForecastFetcher do
 
   @impl GenServer
   def handle_call({:hourly_forecast, lat_long}, _from, state) do
-    path_to_forecast = Enum.join(state, "/")
-    path_to_forecast = Enum.join([path_to_forecast, lat_long], "/")
+    pid =
+      case Map.fetch(state, :writer) do
+        :error ->
+          get_log_file_appender(lat_long)
+
+        {:ok, pid} ->
+          pid
+      end
+
+    IO.inspect(pid)
+    url = state[:darksky_url]
+    key = state[:darksky_api_key]
+    path_to_forecast = Enum.join([url, key, lat_long], "/")
     with_options = "#{path_to_forecast}?units=ca&exclude=daily,minutely,alerts,flags,currently"
     {:ok, response} = HTTPoison.get(with_options)
     response_body = Poison.Parser.parse!(response.body)
     hourly_data = response_body["hourly"]["data"]
 
     Enum.each(hourly_data, fn record ->
-      WeatherKv.LogFileAppender.record(record["time"], record)
+      WeatherKv.LogFileAppender.record(pid, record["time"], record)
     end)
 
     # WeatherKv.LogFileAppender.record(response_body["hourly"]["data"])
-    {:reply, response, state}
+    new_state = Map.put(state, :writer, pid)
+    {:reply, response, new_state}
+  end
+
+  defp get_log_file_appender(lat_long) do
+    case WeatherKv.LogFileAppenderSupervisor.start_child(lat_long) do
+      {:ok, pid} -> pid
+      {:error, {:already_started, pid}} -> pid
+    end
   end
 end

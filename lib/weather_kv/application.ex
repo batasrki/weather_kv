@@ -9,12 +9,13 @@ defmodule WeatherKv.Application do
     # List all child processes to be supervised
     children = [
       {WeatherKv.ForecastFetcher,
-       [
-         Application.get_env(:weather_kv, :darksky_url),
-         Application.get_env(:weather_kv, :darksky_api_key)
-       ]},
+       %{
+         darksky_url: Application.get_env(:weather_kv, :darksky_url),
+         darksky_api_key: Application.get_env(:weather_kv, :darksky_api_key)
+       }},
       # {WeatherKv.LogFileAppender, "temp_log.db"},
-      {WeatherKv.Index, []}
+      {WeatherKv.Index, []},
+      {DynamicSupervisor, strategy: :one_for_one, name: WeatherKv.LogFileAppenderSupervisor}
       # Starts a worker by calling: WeatherKv.Worker.start_link(arg)
       # {WeatherKv.Worker, arg}
     ]
