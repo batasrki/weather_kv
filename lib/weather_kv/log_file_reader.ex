@@ -1,27 +1,23 @@
 defmodule WeatherKv.LogFileReader do
   use GenServer
 
-  def start_link(lat_long) do
-    GenServer.start_link(__MODULE__, lat_long)
+  def start_link(logfile_path) do
+    GenServer.start_link(__MODULE__, logfile_path)
   end
 
-  def get(pid, key) do
-    GenServer.call(pid, {:get, key})
-  end
-
-  @impl GenServer
-  def init(lat_long) do
-    {:ok, %{fd: open(lat_long)}}
-  end
-
-  def open(lat_long) do
-    log_file_path = String.replace(lat_long, ".", "") |> String.replace(",", "_")
-    File.open!("#{log_file_path}.db", [:read, :binary])
+  def get(pid, lat_long) do
+    GenServer.call(pid, {:get, lat_long})
   end
 
   @impl GenServer
-  def handle_call({:get, key}, _from, %{fd: fd} = state) do
-    case WeatherKv.Index.lookup(key) do
+  def init(logfile_path) do
+    fd = File.open!(logfile_path, [:read, :binary])
+    {:ok, %{fd: fd}}
+  end
+
+  @impl GenServer
+  def handle_call({:get, lat_long}, _from, %{fd: fd} = state) do
+    case WeatherKv.Index.lookup(lat_long) do
       {:ok, {offset, size}} ->
         {:reply, :file.pread(fd, offset, size), state}
 

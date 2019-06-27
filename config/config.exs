@@ -10,9 +10,6 @@ use Mix.Config
 
 # You can configure your application as:
 #
-config :weather_kv,
-  darksky_url: "https://api.darksky.net/forecast",
-  darksky_api_key: "561f731ec4fdff2c7858b8f91258183c"
 
 # darksky_latlong: "43.844841,-79.560515"
 
@@ -32,4 +29,4 @@ config :weather_kv,
 # Configuration from the imported file will override the ones defined
 # here (which is why it is important to import them last).
 #
-#     import_config "#{Mix.env()}.exs"
+import_config "#{Mix.env()}.exs"

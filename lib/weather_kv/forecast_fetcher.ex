@@ -1,31 +1,25 @@
 defmodule WeatherKv.ForecastFetcher do
   use GenServer
 
-  def start_link(state) do
-    GenServer.start_link(__MODULE__, state, name: __MODULE__)
+  def start_link(_state) do
+    GenServer.start_link(__MODULE__, nil)
   end
 
-  def hourly_forecast(lat_long) do
-    GenServer.call(__MODULE__, {:hourly_forecast, lat_long})
+  def hourly_forecast(pid, lat_long) do
+    GenServer.call(pid, {:hourly_forecast, lat_long})
   end
 
   @impl GenServer
-  def init(state) do
-    {:ok, state}
+  def init(_state) do
+    {:ok,
+     %{
+       darksky_url: Application.get_env(:weather_kv, :darksky_url),
+       darksky_api_key: Application.get_env(:weather_kv, :darksky_api_key)
+     }}
   end
 
   @impl GenServer
   def handle_call({:hourly_forecast, lat_long}, _from, state) do
-    pid =
-      case Map.fetch(state, :writer) do
-        :error ->
-          get_log_file_appender(lat_long)
-
-        {:ok, pid} ->
-          pid
-      end
-
-    IO.inspect(pid)
     url = state[:darksky_url]
     key = state[:darksky_api_key]
     path_to_forecast = Enum.join([url, key, lat_long], "/")
@@ -34,19 +28,10 @@ defmodule WeatherKv.ForecastFetcher do
     response_body = Poison.Parser.parse!(response.body)
     hourly_data = response_body["hourly"]["data"]
 
-    Enum.each(hourly_data, fn record ->
-      WeatherKv.LogFileAppender.record(pid, record["time"], record)
-    end)
+    {current_offset, size} = WeatherKv.LogFileAppender.record(lat_long, hourly_data)
+    WeatherKv.Index.update(lat_long, current_offset, size)
 
     # WeatherKv.LogFileAppender.record(response_body["hourly"]["data"])
-    new_state = Map.put(state, :writer, pid)
-    {:reply, response, new_state}
-  end
-
-  defp get_log_file_appender(lat_long) do
-    case WeatherKv.LogFileAppenderSupervisor.start_child(lat_long) do
-      {:ok, pid} -> pid
-      {:error, {:already_started, pid}} -> pid
-    end
+    {:reply, response, state}
   end
 end

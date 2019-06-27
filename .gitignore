@@ -2,3 +2,4 @@
 .elixir_ls
 _build
 deps
+weather_log.db

@@ -15,15 +15,22 @@ defmodule WeatherKv.MixProject do
   def application do
     [
       extra_applications: [:logger],
-      mod: {WeatherKv.Application, []}
+      mod: {WeatherKv.Application, []},
+      applications: applications(Mix.env())
     ]
   end
+
+  defp applications(:test), do: applications(:default) ++ [:cowboy, :plug]
+
+  defp applications(_), do: [:httpoison]
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:poison, "~> 3.1"},
-      {:httpoison, "~> 1.4"}
+      {:httpoison, "~> 1.4"},
+      {:plug_cowboy, "~> 2.0"},
+      {:plug, "~>1.8"}
     ]
   end
 end
