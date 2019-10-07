@@ -1,8 +1,8 @@
 defmodule WeatherKv.LogFileAppender do
   use GenServer
 
-  def start_link(logfile_path) do
-    GenServer.start_link(__MODULE__, logfile_path, name: __MODULE__)
+  def start_link(initial) do
+    GenServer.start_link(__MODULE__, initial, name: __MODULE__)
   end
 
   def record(lat_long, weather) do
@@ -10,8 +10,9 @@ defmodule WeatherKv.LogFileAppender do
   end
 
   @impl GenServer
-  def init(logfile_path) do
-    fd = File.open!(logfile_path, [:append, :binary])
+  def init(initial) do
+    full_filepath = initial[:filepath] <> initial[:filename]
+    fd = File.open!(full_filepath, [:append, :binary])
     {:ok, %{fd: fd, current_offset: 0}}
   end
 

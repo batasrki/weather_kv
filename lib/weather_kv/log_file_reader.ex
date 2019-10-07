@@ -1,8 +1,8 @@
 defmodule WeatherKv.LogFileReader do
   use GenServer
 
-  def start_link(logfile_path) do
-    GenServer.start_link(__MODULE__, logfile_path)
+  def start_link(initial) do
+    GenServer.start_link(__MODULE__, initial)
   end
 
   def get(pid, lat_long) do
@@ -10,8 +10,10 @@ defmodule WeatherKv.LogFileReader do
   end
 
   @impl GenServer
-  def init(logfile_path) do
-    fd = File.open!(logfile_path, [:read, :binary])
+  def init(initial) do
+    full_filepath = initial[:filepath] <> initial[:filename]
+
+    fd = File.open!(full_filepath, [:read, :binary])
     {:ok, %{fd: fd}}
   end
 

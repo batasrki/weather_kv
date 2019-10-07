@@ -20,7 +20,7 @@ defmodule WeatherKv.MixProject do
     ]
   end
 
-  defp applications(:test), do: applications(:default) ++ [:cowboy, :plug]
+  defp applications(:test), do: applications(:default) ++ [:cowboy, :plug, :propcheck]
 
   defp applications(_), do: [:httpoison]
 
@@ -28,9 +28,10 @@ defmodule WeatherKv.MixProject do
   defp deps do
     [
       {:poison, "~> 3.1"},
-      {:httpoison, "~> 1.4"},
+      {:httpoison, "~> 1.6"},
       {:plug_cowboy, "~> 2.0"},
-      {:plug, "~>1.8"}
+      {:plug, "~>1.8"},
+      {:propcheck, "~>1.1", only: [:test, :dev]}
     ]
   end
 end

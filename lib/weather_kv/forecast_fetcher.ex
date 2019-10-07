@@ -1,8 +1,8 @@
 defmodule WeatherKv.ForecastFetcher do
   use GenServer
 
-  def start_link(_state) do
-    GenServer.start_link(__MODULE__, nil)
+  def start_link(initial) do
+    GenServer.start_link(__MODULE__, initial)
   end
 
   def hourly_forecast(pid, lat_long) do
@@ -10,11 +10,11 @@ defmodule WeatherKv.ForecastFetcher do
   end
 
   @impl GenServer
-  def init(_state) do
+  def init(initial) do
     {:ok,
      %{
-       darksky_url: Application.get_env(:weather_kv, :darksky_url),
-       darksky_api_key: Application.get_env(:weather_kv, :darksky_api_key)
+       darksky_url: initial[:darksky_url],
+       darksky_api_key: initial[:darksky_api_key]
      }}
   end
 

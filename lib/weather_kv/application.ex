@@ -8,20 +8,36 @@ defmodule WeatherKv.Application do
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
-      {WeatherKv.ForecastFetcher, []},
-      {WeatherKv.Index, "weather_log.db"}
+      {WeatherKv.ForecastFetcher,
+       [
+         darksky_url: Application.get_env(:weather_kv, :darksky_url),
+         darksky_api_key: Application.get_env(:weather_kv, :darksky_api_key)
+       ]},
+      {WeatherKv.Index,
+       [
+         filepath: Application.get_env(:weather_kv, :filepath),
+         filename: Application.get_env(:weather_kv, :filename)
+       ]}
       # {DynamicSupervisor, strategy: :one_for_one, name: WeatherKv.LogFileAppenderSupervisor}
       # Starts a worker by calling: WeatherKv.Worker.start_link(arg)
       # {WeatherKv.Worker, arg}
     ]
 
     children =
-      cond do
-        Mix.env() == :test -> children
-        true -> [{WeatherKv.LogFileAppender, "weather_log.db"} | children]
+      if Mix.env() == :test do
+        children
+      else
+        [
+          {WeatherKv.LogFileAppender,
+           [
+             filepath: Application.get_env(:weather_kv, :filepath),
+             filename: Application.get_env(:weather_kv, :filename)
+           ]}
+          | children
+        ]
       end
 
-    # IO.puts(children)
+    # IO.inspect(children)
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

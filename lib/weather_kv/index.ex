@@ -1,8 +1,8 @@
 defmodule WeatherKv.Index do
   use GenServer
 
-  def start_link(logfile_path) do
-    GenServer.start_link(__MODULE__, logfile_path, name: __MODULE__)
+  def start_link(initial) do
+    GenServer.start_link(__MODULE__, initial, name: __MODULE__)
   end
 
   def update(timestamp, offset, size) do
@@ -14,8 +14,10 @@ defmodule WeatherKv.Index do
   end
 
   @impl GenServer
-  def init(logfile_path) do
-    with {:ok, fd} <- File.open(logfile_path, [:read, :binary]),
+  def init(initial) do
+    full_filepath = initial[:filepath] <> initial[:filename]
+
+    with {:ok, fd} <- File.open(full_filepath, [:read, :binary]),
          {_current_offset, index} = load_offsets(fd) do
       File.close(fd)
       {:ok, index}
